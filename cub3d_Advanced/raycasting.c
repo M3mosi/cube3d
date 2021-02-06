@@ -70,6 +70,14 @@ void		dda(t_spawn *sp, char **map)
 			else if (sp->stepy == -1)
 				sp->side = 3;
 		}
+		if (map[sp->mapy][sp->mapx] == '2')
+		{
+			sp->hit = 0;
+			if (sp->side == 0 || sp->side == 2)
+				sp->side = 4;
+			else
+				sp->side = 5;
+		}
 		if (map[sp->mapy][sp->mapx] == '1')
 			sp->hit = 1;
 	}
@@ -77,26 +85,57 @@ void		dda(t_spawn *sp, char **map)
 
 void		dda_sprite(t_spawn *sp, char **map)
 {
-	while (sp->hit_sprite == 0)
+	sp->hit = 0;
+	while (sp->hit == 0)
 	{
 		if (sp->sidedistx < sp->sidedisty)
 		{
 			sp->sidedistx += sp->deltadistx;
 			sp->mapx += sp->stepx;
+			if (sp->stepx == 1)
+				sp->side = 0;
+			else if (sp->stepx == -1)
+				sp->side = 2;
 		}
 		else if (sp->sidedistx > sp->sidedisty)
 		{
 			sp->sidedisty += sp->deltadisty;
 			sp->mapy += sp->stepy;
+			if (sp->stepy == 1)
+				sp->side = 1;
+			else if (sp->stepy == -1)
+				sp->side = 3;
 		}
 		if (map[sp->mapy][sp->mapx] == '2')
-			sp->hit_sprite = 1;
+		{
+			sp->hit = 1;
+			if (sp->side == 0 || sp->side == 2)
+				sp->side = 4;
+			else
+				sp->side = 5;
+			if ((int)sp->posx > sp->mapx)
+			{
+				if ((int)sp->posy > sp->mapy)
+					sp->perpwalldist = sqrt (pow((sp->posx - sp->mapx), 2) + pow((sp->posy - sp->mapy), 2));
+				else
+					sp->perpwalldist = sqrt (pow((sp->posx - sp->mapx), 2) + pow((sp->mapy - sp->posy), 2));
+			}
+			else
+			{
+				if ((int)sp->posy > sp->mapy)
+					sp->perpwalldist = sqrt (pow((sp->mapx - sp->posx), 2) + pow((sp->posy - sp->mapy), 2));
+				else
+					sp->perpwalldist = sqrt (pow((sp->mapx - sp->posx), 2) + pow((sp->mapy - sp->posy), 2));
+			}
+		}
+		if (map[sp->mapy][sp->mapx] == '1')
+			sp->hit = -1;
 	}
 }
 
 void		pwd_calc(t_spawn *sp)
 {
-	if (sp->side == 0 || sp->side == 2)
+	if (sp->side == 0 || sp->side == 2 || sp->side == 4)
 		sp->perpwalldist = (sp->mapx - sp->posx +
 							(1 - sp->stepx) / 2) / sp->raydirx;
 	else
@@ -175,18 +214,17 @@ void		print_sprite(t_hook *h, int x)
 	int	y;
 	int	temp;
 	int	color;
-
-	if (h->map[h->sp->mapy][h->sp->mapx] == '1')
+	//printf("rx %f ry %f", h->sp->dirx, h->sp->diry);
+	if (h->map[h->sp->mapy][h->sp->mapx] == '2')
 	{
 		y = h->sp->drawstart;
 		while (y <= h->sp->drawend)
 		{
-			h->sp->texpos += h->sp->step;
-			
-			h->sp->texy = (int)h->sp->texpos & (h->tex[4]->height - 1);
-			color = ((h->tex)[4])->buff[(int)(h->tex[4]->height * h->sp->texy + h->sp->texx)];
-			draw_dot(h, x, y + h->sp->appo, getcolor(h->tex[4],
-				h->sp->texx, h->sp->texy, h->sp->perpwalldist));
+				h->sp->texpos += h->sp->step;
+				h->sp->texy = (int)h->sp->texpos & (h->tex[4]->height - 1);
+				color = ((h->tex)[4])->buff[(int)(h->tex[4]->height * h->sp->texy + h->sp->texx)];
+				draw_dot(h, x, y + h->sp->appo, getcolor(h->tex[4],
+					h->sp->texx, h->sp->texy, 0));
 			y++;
 		}
 	}
@@ -262,6 +300,38 @@ void		print_wall(t_hook *h, int x)
 	}
 }
 
+void sprite_manager(t_hook *h)
+{
+	int x;
+	int j;
+	int sw;
+
+	x = 0;
+	sw = 0;
+	while (x < h->var.rx)
+	{
+		var_dda(h->sp);
+		dda_sprite(h->sp, h->map);
+		height_calc(h->sp, h->var);
+		tex_coord(h->sp, h->var);
+		j = 0;
+		if (sw == 1 && h->sp->hit == 0)
+			sw = 0;
+		if (h->sp->hit == 1 && sw == 0)
+		while (j < (h->sp->drawend - h->sp->drawstart))
+		{
+			print_sprite(h, x);
+			j++;
+			x++;
+			sw = 1;
+		}
+		ray_calc(h->sp, h->var, x);
+		if (!h->sp->sprint)
+			set_speed(h->sp);
+		x++;
+	}
+}
+
 int			raycasting(t_hook *h)
 {
 	int x;
@@ -276,16 +346,16 @@ int			raycasting(t_hook *h)
 		ray_calc(h->sp, h->var, x);
 		var_dda(h->sp);
 		dda(h->sp, h->map);
-		//dda_sprite(h->sp, h->map);
 		pwd_calc(h->sp);
 		height_calc(h->sp, h->var);
 		tex_coord(h->sp, h->var);
 		print_wall2(h, x);
-		//print_sprite(h, x);
+		ray_calc(h->sp, h->var, x);
 		if (!h->sp->sprint)
 			set_speed(h->sp);
 		x++;
 	}
+	sprite_manager(h);
 	mlx_put_image_to_window(h->vars.mlx, h->vars.win, h->img.img, 0, 0);
 	if (!(mlx_destroy_image(h->vars.mlx, h->img.img)))
 		return (0);

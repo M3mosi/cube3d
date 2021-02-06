@@ -111,6 +111,8 @@ int			set_key(int keycode, t_hook *h)
 		h->sp->jump = -1;
 	if (keycode == 12)
 		h->sp->sprint = 1;
+	if (keycode == 53)
+		exit(0);
 	return (0);
 }
 
@@ -157,7 +159,7 @@ int			set_key_render(t_hook *h)
 	{
 		if (!h->sp->appo)
 			h->sp->appo = 1;
-		if ((h->sp->appo * 2) < 200 && h->sp->swjp == 0)
+		if ((h->sp->appo * 2) < 400 && h->sp->swjp == 0)
 			h->sp->appo += 30;
 		else if ((h->sp->appo * 2) > 200 && h->sp->swjp == 0)
 			h->sp->swjp = 1;
@@ -173,7 +175,10 @@ int			set_key_render(t_hook *h)
 	if (h->sp->jump == -1)
 		h->sp->appo = -30;
 	if (h->sp->sprint == 1)
-		h->sp->movspeed = 0.13;
+	{
+		h->sp->rotspeed = 0.3;
+		h->sp->movspeed = 0.5;
+	}
 	raycasting(h);
 	return (0);
 }

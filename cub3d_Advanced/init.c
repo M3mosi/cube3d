@@ -42,7 +42,7 @@ void		set_dir(t_spawn *sp, char c)
 	{
 		sp->dirx = 0;
 		sp->diry = -1;
-		sp->planex = -0.66;
+		sp->planex = -0.70;
 		sp->planey = 0;
 	}
 	else if (c == 'E')
