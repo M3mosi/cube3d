@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   raycasting.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aduregon <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: simonegiovo <simonegiovo@student.42.fr>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/02 11:18:39 by aduregon          #+#    #+#             */
-/*   Updated: 2021/02/05 12:27:09 by aduregon         ###   ########.fr       */
+/*   Updated: 2021/02/07 18:29:28 by simonegiovo      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,63 +77,71 @@ void		dda(t_spawn *sp, char **map)
 
 int	check_circle(t_spawn *sp, char **map)
 {
-	int i;
+	double x;
+	double y;
+	double dist;
 
-	i = 2;
-	while (i < 5)
+	printf("x %f y %f \n", sp->posx, sp->posy);
+	if (sp->posx > sp->sidedistx)
+		x = (double)sp->posx - (sp->sidedistx - sp->deltadistx + (sp->deltadistx / 2));
+	else
+		x = (sp->sidedistx - sp->deltadistx + (sp->deltadistx / 2)) - (double)sp->posx;
+	if (sp->posy > sp->sidedisty)
+		y = (double)sp->posy - (sp->sidedisty - sp->deltadisty +(sp->deltadisty / 2));
+	else
+		y = (sp->sidedisty - sp->deltadisty +(sp->deltadisty / 2)) - (double)sp->posy;
+	if (y > (sp->mapy + 0-5))
 	{
-		if (check_circle_engine(sp, map, i))
-			return (1);
-		i++;
-	}
-}
-
-int	check_circle_engine(t_spawn *sp, char **map, int i)
-{
-	int x;
-	int y;
-	int dist;
-
-	sp->sidedistx = sp->sidedistx + (sp->deltadistx / i);
-	sp->sidedisty = sp->sidedisty + (sp->deltadisty / i);
-	x = sp->sidedistx + sp->posx;
-	y = sp->sidedisty + sp->posy;
-	if (y > (mapy + 0-5))
-	{
-		if (x > (mapx +0.5))
-			dist = sqrt((exp(y - (mapy + 0.5), 2)) + (exp(x - (mapx + 0.5), 2)));
+		if (x > ((double)sp->mapx + 0.5))
+			dist = sqrt((pow(y - ((double)sp->mapy + 0.5), 2)) + (pow(x - ((double)sp->mapx + 0.5), 2)));
 		else
-			dist = sqrt((exp(y - (mapy + 0.5), 2)) + (exp((mapx + 0.5) - x),2));
+			dist = sqrt((pow(y - ((double)sp->mapy + 0.5), 2)) + (pow(((double)sp->mapx + 0.5) - x ,2)));
 	}
-	else if (y > (mapy + 0-5))
+	else if (y > ((double)sp->mapy + 0-5))
 	{
-		if (x > (mapx +0.5))
-			dist = sqrt((exp((mapy + 0.5) - y), 2) + (exp(x - (mapx + 0.5), 2)));
+		if (x > ((double)sp->mapx +0.5))
+			dist = sqrt((pow(((double)sp->mapy + 0.5) - y, 2)) + (pow(x - ((double)sp->mapx + 0.5), 2)));
 		else
-			dist = sqrt((exp((mapy + 0.5) - y), 2) + (exp((mapx + 0.5) - x), 2));
+			dist = sqrt((pow(((double)sp->mapy + 0.5) - y, 2)) + (pow(((double)sp->mapx + 0.5) - x, 2)));
 	}
-	if (dist < 0.5)
+	printf("x %f y %f mx %d my %d dist %f\n", x, y, sp->mapx, sp->mapy, dist);
+	if (dist <= 1)
 		return (1);
 	return (0);
 }
 
 void		dda_sprite(t_spawn *sp, char **map)
 {
+
+	sp->hit_sprite = 0;
 	while (sp->hit_sprite == 0)
 	{
 		if (sp->sidedistx < sp->sidedisty)
 		{
 			sp->sidedistx += sp->deltadistx;
 			sp->mapx += sp->stepx;
+			if (sp->stepx == 1)
+				sp->side = 0;
+			else if (sp->stepx == -1)
+				sp->side = 2;
 		}
 		else if (sp->sidedistx > sp->sidedisty)
 		{
 			sp->sidedisty += sp->deltadisty;
 			sp->mapy += sp->stepy;
+			if (sp->stepy == 1)
+				sp->side = 1;
+			else if (sp->stepy == -1)
+				sp->side = 3;
 		}
 		if (map[sp->mapy][sp->mapx] == '2')
+		{
+			//printf("%f \n");
 			if (check_circle(sp, map))
 				sp->hit_sprite = 1;
+		}
+		if (map[sp->mapy][sp->mapx] == '1')
+			sp->hit_sprite = -1;
 	}
 }
 
@@ -219,7 +227,7 @@ void		print_sprite(t_hook *h, int x)
 	int	temp;
 	int	color;
 
-	if (h->map[h->sp->mapy][h->sp->mapx] == '1')
+	if (h->map[h->sp->mapy][h->sp->mapx] == '2')
 	{
 		y = h->sp->drawstart;
 		while (y <= h->sp->drawend)
@@ -227,7 +235,6 @@ void		print_sprite(t_hook *h, int x)
 			h->sp->texpos += h->sp->step;
 			
 			h->sp->texy = (int)h->sp->texpos & (h->tex[4]->height - 1);
-			color = ((h->tex)[4])->buff[(int)(h->tex[4]->height * h->sp->texy + h->sp->texx)];
 			draw_dot(h, x, y + h->sp->appo, getcolor(h->tex[4],
 				h->sp->texx, h->sp->texy, h->sp->perpwalldist));
 			y++;
@@ -285,21 +292,12 @@ void		print_wall(t_hook *h, int x)
 	int y;
 	int temp;
 
-	if (h->map[h->sp->mapy][h->sp->mapx] == '1')
+	if (h->map[h->sp->mapy][h->sp->mapx] == '2')
 	{
 		y = h->sp->drawstart;
 		while (y <= h->sp->drawend)
-		{
-			if (h->sp->side == 0)
-				my_mlx_pixel_put(&h->img, x, y, create_trgb(0, 153, 255, 235));
-			else if (h->sp->side == 1)
-				my_mlx_pixel_put(&h->img, x, y, create_trgb(0, 143, 245, 225));
-			else if (h->sp->side == 2)
-				my_mlx_pixel_put(&h->img, x, y, create_trgb(0, 150,
-							0, 204));
-			else if (h->sp->side == 3)
-				my_mlx_pixel_put(&h->img, x, y, create_trgb(0, 174,
-							0, 204));
+		{	
+			my_mlx_pixel_put(&h->img, x, y, create_trgb(0, 153, 255, 235));
 			y++;
 		}
 	}
@@ -308,8 +306,14 @@ void		print_wall(t_hook *h, int x)
 int			raycasting(t_hook *h)
 {
 	int x;
+	int sw;
+	int ds;
+	int de;
 
 	x = 0;
+	ds = 0;
+	de = 0;
+	sw = 0;
 	h->img.img = mlx_new_image(h->vars.mlx, h->var.rx, h->var.ry);
 	h->img.addr = mlx_get_data_addr(h->img.img, &h->img.bits_per_pixel,
 									&h->img.line_length, &h->img.endian);
@@ -319,17 +323,31 @@ int			raycasting(t_hook *h)
 		ray_calc(h->sp, h->var, x);
 		var_dda(h->sp);
 		dda(h->sp, h->map);
-		dda_sprite(h->sp, h->map);
 		pwd_calc(h->sp);
 		height_calc(h->sp, h->var);
 		tex_coord(h->sp, h->var);
 		print_wall2(h, x);
-		ray_calc(h->sp, h->var, x);
 		var_dda(h->sp);
-		dda(h->sp, h->map);
-		height_calc(h->sp, h->var);
+		dda_sprite(h->sp, h->map);
+		pwd_calc(h->sp);
+		if (sw == 0)
+		{
+			height_calc(h->sp, h->var);
+			ds = h->sp->drawstart;
+			de = h->sp->drawend;
+		}
 		tex_coord(h->sp, h->var);
-		print_sprite(h, x);
+		if (h->sp->hit_sprite == 1 && sw == 0)
+			sw = 1;
+		if (h->sp->hit_sprite == 1)
+		{
+			h->sp->drawstart = ds;
+			h->sp->drawend = de;
+			print_sprite(h, x);
+		}
+		else
+			sw = 0;
+		ray_calc(h->sp, h->var, x);
 		if (!h->sp->sprint)
 			set_speed(h->sp);
 		x++;
