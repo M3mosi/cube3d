@@ -20,7 +20,7 @@ void		my_mlx_pixel_put(t_data *data, int x, int y, int color)
 	*(unsigned int*)dst = color;
 }
 
-int		create_trgb(int t, int r, int g, int b)
+int			create_trgb(int t, int r, int g, int b)
 {
 	return (t << 24 | r << 16 | g << 8 | b);
 }
@@ -50,7 +50,7 @@ void		print_background(t_var var, t_data img)
 	}
 }
 
-void	printmap(t_hook *h)
+void		printmap(t_hook *h)
 {
 	int i;
 	int k;
@@ -173,7 +173,9 @@ int			set_key_render(t_hook *h)
 			h->sp->appo = h->sp->appo - 30;
 	}
 	if (h->sp->jump == -1)
-		h->sp->appo = -30;
+	{
+		h->sp->appo = -50;
+	}
 	if (h->sp->sprint == 1)
 	{
 		h->sp->rotspeed = 0.3;
