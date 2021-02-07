@@ -6,7 +6,7 @@
 /*   By: simonegiovo <simonegiovo@student.42.fr>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/02 11:18:39 by aduregon          #+#    #+#             */
-/*   Updated: 2021/02/07 18:42:03 by simonegiovo      ###   ########.fr       */
+/*   Updated: 2021/02/07 21:14:21 by simonegiovo      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,7 +112,11 @@ int	check_circle(t_spawn *sp, char **map)
 
 void		dda_sprite(t_spawn *sp, char **map)
 {
+	double mapx;
+	double mapy;
 
+	mapx = sp->mapx;
+	mapy = sp->mapy;
 	sp->hit_sprite = 0;
 	while (sp->hit_sprite == 0)
 	{
@@ -136,7 +140,8 @@ void		dda_sprite(t_spawn *sp, char **map)
 		}
 		if (map[sp->mapy][sp->mapx] == '2')
 		{
-			//printf("%f \n");
+			sp->mapx = (int)mapx;
+			sp->mapy = (int)mapy;
 			if (check_circle(sp, map))
 				sp->hit_sprite = 1;
 		}
