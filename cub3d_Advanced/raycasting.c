@@ -6,7 +6,7 @@
 /*   By: simonegiovo <simonegiovo@student.42.fr>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/02 11:18:39 by aduregon          #+#    #+#             */
-/*   Updated: 2021/02/07 21:14:21 by simonegiovo      ###   ########.fr       */
+/*   Updated: 2021/02/09 00:19:02 by simonegiovo      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,15 +81,22 @@ int	check_circle(t_spawn *sp, char **map)
 	double y;
 	double dist;
 
-	printf("x %f y %f \n", sp->posx, sp->posy);
-	if (sp->posx > sp->sidedistx)
-		x = (double)sp->posx - (sp->sidedistx - sp->deltadistx + (sp->deltadistx / 2));
+	if (sp->dirx < 0)
+		sp->deltadistx *= -1;
+	if (sp->diry < 0)
+		sp->deltadisty *= -1;
+	if (sp->side == 0 || sp->side == 2)
+	{
+		y = ((sp->deltadisty/sp->deltadistx) * sp->mapx) - ((sp->deltadisty/sp->deltadistx) * sp->posx) + sp->posy;
+		x = sp->mapx;
+	}
 	else
-		x = (sp->sidedistx - sp->deltadistx + (sp->deltadistx / 2)) - (double)sp->posx;
-	if (sp->posy > sp->sidedisty)
-		y = (double)sp->posy - (sp->sidedisty - sp->deltadisty +(sp->deltadisty / 2));
-	else
-		y = (sp->sidedisty - sp->deltadisty +(sp->deltadisty / 2)) - (double)sp->posy;
+	{
+		x = (sp->mapy / (sp->deltadisty/sp->deltadistx)) - (sp->posy / (sp->deltadisty/sp->deltadistx)) + sp->posx;
+		y = sp->mapy;
+	}
+	x += (sp->deltadistx / 2);
+	y += sp->deltadisty / 2;
 	if (y > (sp->mapy + 0-5))
 	{
 		if (x > ((double)sp->mapx + 0.5))
@@ -104,7 +111,7 @@ int	check_circle(t_spawn *sp, char **map)
 		else
 			dist = sqrt((pow(((double)sp->mapy + 0.5) - y, 2)) + (pow(((double)sp->mapx + 0.5) - x, 2)));
 	}
-	printf("x %f y %f mx %d my %d dist %f\n", x, y, sp->mapx, sp->mapy, dist);
+	//printf("x %f y %f mx %d my %d dist %f\n", x, y, sp->mapx, sp->mapy, dist);
 	if (dist <= 1)
 		return (1);
 	return (0);
